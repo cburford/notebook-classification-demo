@@ -9,7 +9,7 @@ This code demonstrates the process of downloading notes from an Evernote account
 Requirements and Setup
 ----------------------
 
-I have tested this on Mac OS X and Linux with Python 2.7. Dependencies are:
+I have tested on Mac OS X and Linux. Python 2.7 is required. Other dependencies are:
 
 * [LIBSVM](http://www.csie.ntu.edu.tw/~cjlin/libsvm/). If you follow the standard install process you will need to manually copy the svm.py and svmutil.py files to somewhere Python can see them.
 * [lxml](http://lxml.de/index.html) to parse note XML.
@@ -59,7 +59,7 @@ A sample classification run:
 	updating note f270005d-178f-4646-b9cc-e862fe5946b5
 	writing to cache
 	fetching content for f270005d-178f-4646-b9cc-e862fe5946b5
-	using 25763 features
+	using 16128 features
 	Accuracy = 100% (5/5) (classification)
 	+--------------------------------+------------------+------------------+----------------+
 	|              note              |      actual      |    predicted     |    updated     |
@@ -74,17 +74,21 @@ A sample classification run:
 Performance
 -----------
 
-Classifier performance should be expected to be strongly correlated with the number of notebooks in the account. A true, user-centric measure could be derived given access to a very large number of Evernote accounts.
+Classifier performance should be expected to be strongly correlated with the number of notebooks in the account. A true, user-centric measure could only be derived with access to a large number of Evernote accounts.
 
 The table below shows performance with my constructed test data. For what it's worth, performance on my ten-notebook personal account was similarly good.
 
 <table>
 	<tr><th>Training set size</th><th>Accuracy (%)</th></tr>
-	<tr><td>25</td><td>71</td></tr>
-	<tr><td>50</td><td>81</td></tr>
-	<tr><td>100</td><td>90</td></tr>
-	<tr><td>200</td><td>96</td></tr>
+	<tr><td>25</td><td>82</td></tr>
+	<tr><td>50</td><td>86</td></tr>
+	<tr><td>100</td><td>92</td></tr>
+	<tr><td>200</td><td>95</td></tr>
 </table>
 
+Issues
+------
 
+The tokenisation regular expression assumes that words are whitespace separated. This breaks down for languages like Chinese, Japanese. The solution would be to incorporate a language identification step and a morphological analyser.
 
+The bag-of-words feature model generates very large feature counts. This is not a problem for classifier performance, because linear kernel SVMs do an excellent job in this scenario, but it could present a CPU/memory load problem in a large-scale system. In such a case it would be necessary to introduce a feature selection step. See these [two](http://jmlr.csail.mit.edu/papers/volume3/forman03a/forman03a_full.pdf) [papers](http://www.hpl.hp.com/techreports/2004/HPL-2004-86.pdf) for a good starting point.
