@@ -1,5 +1,3 @@
-"A simple file-based read-only cache for Evernote."
-
 import thrift.protocol.TBinaryProtocol as TBinaryProtocol
 import thrift.transport.THttpClient as THttpClient
 import evernote.edam.userstore.UserStore as UserStore
@@ -9,10 +7,6 @@ import os
 import pickle
 from collections import OrderedDict
 import logging
-import codecs
-
-import random
-from evernote.edam.type.ttypes import Note
 
 
 class ENCache(object):
@@ -48,7 +42,7 @@ class ENCache(object):
         user_id: The numeric user ID.
 
     Raises:
-        In addition to those listed, all methods can raise either of:
+        In addition to the exceptions listed, all methods can raise either of:
             EDAMUserException: Auth failed or invalid request.
             EDAMSystemException: Server-side error.
     """
@@ -56,7 +50,7 @@ class ENCache(object):
     USERFILE_NAME = "user.dat"
     MAX_SYNC_OBJS = 256  # This is the maximum. See EDAM docs.
 
-    def __init__(self, auth_token, host, cache_root="data", forceuser=None):
+    def __init__(self, auth_token, host, cache_root="data"):
         """Connect to the API and read any cached notes and notebooks into
         memory.
 
@@ -70,24 +64,18 @@ class ENCache(object):
                 error.
         """
         # Get the UserStore object and user ID.
-        if forceuser:
-            print "forcing user %s" % forceuser
-            user_id = forceuser
-            userstore = None
-            notestore = None
-        else:
-            userstore_uri = "https://%s/edam/user" % host
-            userstore_httpclient = THttpClient.THttpClient(userstore_uri)
-            userstore_protocol = \
-                TBinaryProtocol.TBinaryProtocol(userstore_httpclient)
-            userstore = UserStore.Client(userstore_protocol)
-            user_id = userstore.getUser(auth_token).id
-            # Get the NoteStore object.
-            notestore_url = userstore.getNoteStoreUrl(auth_token)
-            notestore_httpclient = THttpClient.THttpClient(notestore_url)
-            notestore_protocol = \
-                TBinaryProtocol.TBinaryProtocol(notestore_httpclient)
-            notestore = NoteStore.Client(notestore_protocol)
+        userstore_uri = "https://%s/edam/user" % host
+        userstore_httpclient = THttpClient.THttpClient(userstore_uri)
+        userstore_protocol = \
+            TBinaryProtocol.TBinaryProtocol(userstore_httpclient)
+        userstore = UserStore.Client(userstore_protocol)
+        user_id = userstore.getUser(auth_token).id
+        # Get the NoteStore object.
+        notestore_url = userstore.getNoteStoreUrl(auth_token)
+        notestore_httpclient = THttpClient.THttpClient(notestore_url)
+        notestore_protocol = \
+            TBinaryProtocol.TBinaryProtocol(notestore_httpclient)
+        notestore = NoteStore.Client(notestore_protocol)
         # Prepare the cache and set attributes.
         cache_path = os.path.sep.join([cache_root, host, str(user_id)])
         userfile_path = os.path.sep.join([cache_path, self.USERFILE_NAME])
@@ -147,10 +135,8 @@ class ENCache(object):
             IOError: Cache access error.
         """
         scfilter = SyncChunkFilter(includeNotes=True,
-                                   #includeNoteResources=True,
                                    includeNoteAttributes=True,
                                    includeNotebooks=True,
-                                   #includeTags=True,
                                    includeExpunged=True)
         after_usn = self.last_update_count
         while True:
@@ -190,8 +176,8 @@ class ENCache(object):
                         if guid in self.notebook_data:
                             self.logger.debug("expunging notebook %s", guid)
                             del self.notebook_data[guid]
-                    self.logger.debug("synced %d/%d", chunk.chunkHighUSN,
-                                      chunk.updateCount)
+                self.logger.debug("synced %d/%d", chunk.chunkHighUSN,
+                                  chunk.updateCount)
                 if after_usn == chunk.updateCount:
                     break
             else:
@@ -230,7 +216,7 @@ class ENCache(object):
             note: Note object.
 
         Returns:
-            Unicode content string.
+            File handle.
 
         Raises:
             IOError: Cache access error.
@@ -242,17 +228,4 @@ class ENCache(object):
             handle = open(fname, "w")
             handle.write(content)
             handle.close()
-            #return unicode(content, "utf-8")
-        #return "\n".join(codecs.open(fname, encoding="utf-8"))
         return open(fname)
-
-    def update_notes(self):
-        "Submit a null update for all notes in random order."
-        notes = list(self.notes)
-        random.shuffle(notes)
-        for note in notes:
-            updated = Note()
-            updated.guid = note.guid
-            updated.title = note.title
-            self.notestore.updateNote(self.auth_token, updated)
-            print "updated %s" % note.title

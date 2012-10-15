@@ -1,23 +1,73 @@
 #!/usr/bin/env python
 
-"Evernote notebook classifier demo."
+"""Evernote notebook classifier demo.
+
+TODO:
+consider adding resource features
+consider adding feature selection
+consider adding test code
+"""
 
 from encache import ENCache
 import argparse
 import logging
 import random
 from classifier import SvmClassifier
-from collections import Counter
 from urlparse import urlparse
 from lxml import etree
 from prettytable import PrettyTable
 from datetime import datetime
+import re
+
+
+class Tokeniser(object):
+    """Simple tokeniser."""
+
+    regexp = re.compile(r'''(?x)
+        \$?\d+(?:\.\d+)?     # currency amounts, e.g. $12.50
+        | (?:[A-Z]\.)+       # abbreviations, e.g. U.S.A.
+        | [^\w\s]+           # sequences of punctuation
+        | [\w-]+             # sequences of word characters
+    ''', re.UNICODE)
+
+    @classmethod
+    def split(cls, string):
+        """Split the input string into tokens.
+
+        Args:
+            string: A single-line or multi-line string.
+
+        Returns:
+            List of tokens.
+        """
+        return cls.regexp.findall(string)
 
 
 def add_metadata_features(featuredict, note):
-    """Adds features from Note metadata."""
-    for token in note.title.split():
-        featuredict["META-TITLETOKEN-%s" % token] = 1
+    """Add features from note metadata.
+
+    Derive the following features from the Note and add them to the
+    featuredict with binary values:
+
+        META-TITLETOKEN-<token>: Set for each unique, case-folded token in
+            the note title.
+        META-URL-<domain>: Set with the domain of the note URL, if one is
+            provided.
+        META_HASURL: Set if the note has a URL.
+        META-HASLOCATION: Set if the note has a latitude.
+        META-SOURCE-<source>: Set with the source of the note, if it is
+            provided.
+        META-PLACE-<place>: Set with the place name of the note, if it is
+            provided.
+        META-CONTENTCLASS-<class>: Set with the content class of the note, if
+            it is provided.
+
+    Args:
+        featuredict: A dict.
+        note: Note object.
+    """
+    for token in Tokeniser.split(unicode(note.title, encoding="utf-8")):
+        featuredict["META-TITLETOKEN-%s" % token.lower()] = 1
     if note.attributes.sourceURL:
         netloc = urlparse(note.attributes.sourceURL).netloc
         if netloc:
@@ -34,11 +84,27 @@ def add_metadata_features(featuredict, note):
 
 
 def add_content_features(featuredict, content):
-    """Adds features based on note content."""
+    """Add features from note content.
+
+    Derive the following features from the Note and add them to the
+    featuredict with binary values:
+
+        CONTENT-TOKEN-<token>: Set for each unique, case-folded token in the
+            note content (not including markup).
+        CONTENT-MEDIA-<mimetype>: Set for each mimetype used for media in the
+            note.
+        CONTENT-HASLINK: Set if the note contains one or more links.
+        CONTENT-LINK-<domain>: Set with the domain of each link in the note.
+        CONTENT-TODO: Set if the note contains a todo.
+
+    Args:
+        featuredict: A dict.
+        content: File-like object containing the note content.
+    """
     parser = etree.XMLParser(resolve_entities=False)
     root = etree.parse(content, parser).getroot()
     string_content = unicode(root.xpath('string()'))
-    for token in string_content.split():
+    for token in Tokeniser.split(string_content):
         featuredict["CONTENT-TOKEN-%s" % token.lower()] = 1
     for media in root.iterfind(".//en-media"):
         featuredict["CONTENT-MEDIA-%s" % media.get("type")] = 1
@@ -53,21 +119,16 @@ def add_content_features(featuredict, content):
         featuredict["CONTENT-TODO"] = 1
 
 
-def note_features(note, content):
-    """
-    BOW
-    BOW title
-    URL domain
-    has_location
-    source
-    place_name
-    content_class
+def note_featuredict(note, content):
+    """Generate a featuredict.
 
-    contains_image
-    contains_todo
-    link domains
-    resource_text
-    (case folding)
+    Args:
+        note: Note object.
+        content: File-like object containing the note content.
+
+    Returns:
+        A dictionary where keys are feature names and values are feature
+        values.
     """
     featuredict = {"DEFAULT": 1}
     add_metadata_features(featuredict, note)
@@ -76,31 +137,19 @@ def note_features(note, content):
     return featuredict
 
 
-def list_notebooks(encache):
-    "Print the notebook GUIDs in Evernote."
-    guids = set()
-    for note in encache.notes:
-        guids.add(note.notebookGuid)
-    print guids
-
-
-def dataset_breakdown(featuresets):
-    "Get stats for a dataset."
-    counter = Counter()
-    for _, label in featuresets:
-        counter[label] += 1
-    print counter.most_common()
-
-
 def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
-    "Test code."
-    # So the encache object can output progress information to the console.
+    """Execute the demo and print output to the console.
+
+    Args:
+        auth_token: A string.
+        host: "www.evernote.com" or "sandbox.evernote.com".
+        do_randomise: Boolean indicating whether or not to shuffle the list
+            of notes before creating training and test sets.
+        test_set_size: Number of notes to reserve for the test set.
+        cache_dir: Root location for the Evernote cache.
+    """
     logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     encache = ENCache(auth_token, host, cache_root=cache_dir)
-    #encache = ENCache(auth_token, evernote_host, cache_root="./data",
-    #                  forceuser="195154")
-    #encache.update_notes()
-    #exit(1)
     encache.sync()
     notes = list(encache.notes)
     print "%d notes in account" % len(encache.notes)
@@ -111,7 +160,7 @@ def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
         random.shuffle(notes)
     featuresets = []
     for note in notes:
-        featureset = (note_features(note, encache.note_content(note)),
+        featureset = (note_featuredict(note, encache.note_content(note)),
                       note.notebookGuid)
         featuresets.append(featureset)
     featuresets_tr = featuresets[:-test_set_size]
@@ -125,26 +174,14 @@ def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
     for note, label in zip(notes[-test_set_size:], labels):
         dtime = datetime.fromtimestamp(note.updated / 1000)
         updated = dtime.strftime("%Y%m%d %H:%M")
-        title = note.title
-        if len(title) > max_title_len:
-            title = "%s..." % title[:max_title_len - 3]
-        table.add_row((title, nb_map[note.notebookGuid], nb_map[label],
-                       updated))
+        row = [note.title, nb_map[note.notebookGuid], nb_map[label], updated]
+        # Work around EDAM encoding bug.
+        for i, value in enumerate(row):
+            row[i] = unicode(value, encoding="utf-8")
+        if len(row[0]) > max_title_len:
+            row[0] = "%s..." % row[0][:max_title_len - 3]
+        table.add_row(row)
     print table
-
-
-def test():
-    "Run with some test arguments."
-    #auth_token = "S=s52:U=55ae32:E=141b91e237d:C=13a616cf77d:\
-#P=1cd:A=en-devtoken:H=a0aa8e914b02305c4a27497f3a734424"
-    auth_token = "S=s1:U=2fa52:E=1413521767b:C=139dd704a7b:P=1cd:\
-A=en-devtoken:H=72141f6b92e70d8b9fba41d57b9a60e0"
-    #host = "www.evernote.com"
-    host = "sandbox.evernote.com"
-    do_randomise = False
-    test_set_size = 20
-    cache_dir = "./data"
-    execute(auth_token, host, do_randomise, test_set_size, cache_dir)
 
 
 def run_cli():
@@ -166,4 +203,3 @@ classification demo")
 
 if __name__ == "__main__":
     run_cli()
-    #test()
