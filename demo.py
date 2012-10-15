@@ -72,11 +72,9 @@ def add_content_features(featuredict, content):
         featuredict: A dict.
         content: File-like object containing the note content.
     """
-    #parser = etree.XMLParser(resolve_entities=False)
     parser = etree.HTMLParser()
     root = etree.parse(content, parser).getroot()
     string_content = unicode(root.xpath('string()'))
-    #print string_content.encode("utf-8")
     for token in Tokeniser.split(string_content):
         featuredict["CONTENT-TOKEN-%s" % token.lower()] = 1
     for media in root.iterfind(".//en-media"):
