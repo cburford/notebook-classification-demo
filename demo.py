@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 
-"""Evernote notebook classifier demo.
-
-TODO:
-consider adding feature selection
-consider adding test code
-consider adding resource features
-"""
+"""Evernote notebook classifier demo."""
 
 from encache import ENCache
 import argparse

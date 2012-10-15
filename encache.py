@@ -144,7 +144,6 @@ class ENCache(object):
                                                         after_usn,
                                                         self.MAX_SYNC_OBJS,
                                                         scfilter)
-            print chunk.chunkHighUSN
             if chunk.chunkHighUSN:
                 after_usn = chunk.chunkHighUSN
                 if chunk.notes:
@@ -207,7 +206,7 @@ class ENCache(object):
         fname = self._note_content_fname(guid)
         try:
             os.unlink(fname)
-        except IOError:
+        except OSError:
             pass
 
     def note_content(self, note):
