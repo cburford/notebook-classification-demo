@@ -3,9 +3,9 @@
 """Evernote notebook classifier demo.
 
 TODO:
-consider adding resource features
 consider adding feature selection
 consider adding test code
+consider adding resource features
 """
 
 from encache import ENCache
@@ -17,30 +17,7 @@ from urlparse import urlparse
 from lxml import etree
 from prettytable import PrettyTable
 from datetime import datetime
-import re
-
-
-class Tokeniser(object):
-    """Simple tokeniser."""
-
-    regexp = re.compile(r'''(?x)
-        \$?\d+(?:\.\d+)?     # currency amounts, e.g. $12.50
-        | (?:[A-Z]\.)+       # abbreviations, e.g. U.S.A.
-        | [^\w\s]+           # sequences of punctuation
-        | [\w-]+             # sequences of word characters
-    ''', re.UNICODE)
-
-    @classmethod
-    def split(cls, string):
-        """Split the input string into tokens.
-
-        Args:
-            string: A single-line or multi-line string.
-
-        Returns:
-            List of tokens.
-        """
-        return cls.regexp.findall(string)
+from tokeniser import Tokeniser
 
 
 def add_metadata_features(featuredict, note):
@@ -101,9 +78,11 @@ def add_content_features(featuredict, content):
         featuredict: A dict.
         content: File-like object containing the note content.
     """
-    parser = etree.XMLParser(resolve_entities=False)
+    #parser = etree.XMLParser(resolve_entities=False)
+    parser = etree.HTMLParser()
     root = etree.parse(content, parser).getroot()
     string_content = unicode(root.xpath('string()'))
+    #print string_content.encode("utf-8")
     for token in Tokeniser.split(string_content):
         featuredict["CONTENT-TOKEN-%s" % token.lower()] = 1
     for media in root.iterfind(".//en-media"):

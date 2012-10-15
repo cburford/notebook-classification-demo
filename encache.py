@@ -144,6 +144,7 @@ class ENCache(object):
                                                         after_usn,
                                                         self.MAX_SYNC_OBJS,
                                                         scfilter)
+            print chunk.chunkHighUSN
             if chunk.chunkHighUSN:
                 after_usn = chunk.chunkHighUSN
                 if chunk.notes:

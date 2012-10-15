@@ -39,7 +39,7 @@ class SvmClassifier(object):
 
     @classmethod
     def featuresets_to_svm(cls, featureindex, labelindex, featuresets):
-        """Maps featuresets to libSVM vector and label representations.
+        """Map featuresets to libSVM vector and label representations.
 
         Args:
             featureindex: Dictionary mapping feature names to integers.
@@ -63,7 +63,7 @@ class SvmClassifier(object):
         return vectors, labels
 
     def classify(self, featuresets):
-        """Classifies.
+        """Classify a list of featureset.
 
         Args:
             featuresets: List of featuresets.
@@ -94,6 +94,8 @@ class SvmClassifier(object):
         for featuredict, label in featuresets:
             all_features.update(set(featuredict.keys()))
             all_labels.add(label)
+        all_labels = sorted(all_labels)
+        all_features = sorted(all_features)
         featureindex = dict(zip(all_features, range(1, len(all_features) + 1)))
         labelindex = dict(zip(all_labels, range(1, len(all_labels) + 1)))
         vectors, labels = cls.featuresets_to_svm(featureindex, labelindex,
@@ -102,28 +104,3 @@ class SvmClassifier(object):
         param = svmutil.svm_parameter(params)
         model = svmutil.svm_train(prob, param)
         return cls(featureindex, labelindex, model)
-
-
-def read_svmfile(fname):
-    "Read the given libSVM format data file into featuresets."
-    result = []
-    for line in open(fname):
-        featuredict = dict()
-        label, features = line.split(" ", 1)
-        for ftrval in features.split():
-            feature, value = ftrval.split(":")
-            featuredict[feature] = float(value)
-        result.append((featuredict, label))
-    return result
-
-
-def test():
-    "Test code."
-    train_data = read_svmfile("/Users/clint/Temporary/letter.scale.tr")
-    test_data = read_svmfile("/Users/clint/Temporary/letter.scale.t")
-    classifier = SvmClassifier.train(train_data)
-    print classifier.classify(test_data)
-
-
-if __name__ == "__main__":
-    test()

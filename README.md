@@ -28,13 +28,15 @@ File Descriptions
 -----------------
 
 * demo.py. The main module. Execute this from the command-line to run the demo. See in-module documentation for details of the feature model.
+* tokenizer.py. A regular expression tokeniser.
 * encache.py. A syncing, read-only cache of a user's Evernote note content and metadata. See in-module documentation for details of the on-disk format.
 * classifier.py. A convenience wrapper around the LIBSVM Python interface.
+* test/*. A set of unit tests.
 
 Usage
 -----
 
-Print usage information:
+Usage information:
 
 	% ./demo.py -h
 	usage: demo.py [-h] [-s S] [-n N] [-d D] [-r] auth_token
@@ -89,6 +91,8 @@ The table below shows performance with my constructed test data. For what it's w
 Issues
 ------
 
-The tokenisation regular expression assumes that words are whitespace separated. This breaks down for languages like Chinese, Japanese. The solution would be to incorporate a language identification step and a morphological analyser.
+The tokenisation regular expression assumes that words are whitespace separated. This breaks down for languages like Chinese and Japanese. The solution would be to incorporate a language identification step and a morphological analyser.
 
 The bag-of-words feature model generates very large feature counts. This is not a problem for classifier performance, because linear kernel SVMs do an excellent job in this scenario, but it could present a CPU/memory load problem in a large-scale system. In such a case it would be necessary to introduce a feature selection step. See these [two](http://jmlr.csail.mit.edu/papers/volume3/forman03a/forman03a_full.pdf) [papers](http://www.hpl.hp.com/techreports/2004/HPL-2004-86.pdf) for a good starting point.
+
+The feature model does not make use of resource contents. A simple addition would be to add bag-of-words features for the results of NoteStore.getResourceSearchText.
