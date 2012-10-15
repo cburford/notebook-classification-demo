@@ -3,7 +3,7 @@ import classifier
 from mock import Mock
 
 
-class TestTokeniser(unittest.TestCase):
+class TestClassifier(unittest.TestCase):
 
     def setUp(self):
         classifier.svmutil = Mock()
