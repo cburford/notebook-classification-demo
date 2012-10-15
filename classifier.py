@@ -56,7 +56,10 @@ class SvmClassifier(object):
                            for ftr, ftrval in featuredict.items()
                            if ftr in featureindex])
             vectors.append(vector)
-            labels.append(labelindex[label])
+            if label in labelindex:
+                labels.append(labelindex[label])
+            else:
+                labels.append(-1)
         return vectors, labels
 
     def classify(self, featuresets):

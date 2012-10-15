@@ -6,10 +6,12 @@ from encache import ENCache
 import argparse
 import logging
 import random
-from util import SvmClassifier
+from classifier import SvmClassifier
 from collections import Counter
 from urlparse import urlparse
 from lxml import etree
+from prettytable import PrettyTable
+from datetime import datetime
 
 
 def add_metadata_features(featuredict, note):
@@ -90,36 +92,59 @@ def dataset_breakdown(featuresets):
     print counter.most_common()
 
 
-def test():
+def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
     "Test code."
-    auth_token = "S=s52:U=55ae32:E=1414f1280c5:C=139f76154c5:P=1cd:\
-A=en-devtoken:H=5b23e03de18de88bb837f9dda6221b61"
-    #auth_token = "S=s1:U=2fa52:E=1413521767b:C=139dd704a7b:P=1cd:\
-#A=en-devtoken:H=72141f6b92e70d8b9fba41d57b9a60e0"
-    evernote_host = "www.evernote.com"
-    #evernote_host = "sandbox.evernote.com"
-    logging.basicConfig(level=logging.DEBUG)
-    encache = ENCache(auth_token, evernote_host, cache_root="./data")
+    # So the encache object can output progress information to the console.
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    encache = ENCache(auth_token, host, cache_root=cache_dir)
     #encache = ENCache(auth_token, evernote_host, cache_root="./data",
     #                  forceuser="195154")
+    #encache.update_notes()
+    #exit(1)
     encache.sync()
     notes = list(encache.notes)
-    random.shuffle(notes)
+    print "%d notes in account" % len(encache.notes)
+    if len(notes) <= test_set_size:
+        print "please specify a smaller test set size"
+        exit(1)
+    if do_randomise:
+        random.shuffle(notes)
     featuresets = []
     for note in notes:
         featureset = (note_features(note, encache.note_content(note)),
                       note.notebookGuid)
         featuresets.append(featureset)
-    featuresets_tr = featuresets[:-20]
-    featuresets_t = featuresets[-20:]
+    featuresets_tr = featuresets[:-test_set_size]
+    featuresets_t = featuresets[-test_set_size:]
     classifier = SvmClassifier.train(featuresets_tr)
     print "using %d features" % len(classifier.featureindex)
-    #labels = set([featureset[1] for featureset in featuresets_tr])
-    #dataset_breakdown(featuresets)
-    #dataset_breakdown(featuresets_tr)
-    #dataset_breakdown(featuresets_t)
-    #exit(1)
-    classifier.classify(featuresets_t)
+    labels = classifier.classify(featuresets_t)
+    nb_map = encache.notebook_map
+    table = PrettyTable(["note", "actual", "predicted", "updated"])
+    max_title_len = 30
+    for note, label in zip(notes[-test_set_size:], labels):
+        dtime = datetime.fromtimestamp(note.updated / 1000)
+        updated = dtime.strftime("%Y%m%d %H:%M")
+        title = note.title
+        if len(title) > max_title_len:
+            title = "%s..." % title[:max_title_len - 3]
+        table.add_row((title, nb_map[note.notebookGuid], nb_map[label],
+                       updated))
+    print table
+
+
+def test():
+    "Run with some test arguments."
+    #auth_token = "S=s52:U=55ae32:E=141b91e237d:C=13a616cf77d:\
+#P=1cd:A=en-devtoken:H=a0aa8e914b02305c4a27497f3a734424"
+    auth_token = "S=s1:U=2fa52:E=1413521767b:C=139dd704a7b:P=1cd:\
+A=en-devtoken:H=72141f6b92e70d8b9fba41d57b9a60e0"
+    #host = "www.evernote.com"
+    host = "sandbox.evernote.com"
+    do_randomise = False
+    test_set_size = 20
+    cache_dir = "./data"
+    execute(auth_token, host, do_randomise, test_set_size, cache_dir)
 
 
 def run_cli():
@@ -136,10 +161,9 @@ classification demo")
     parser.add_argument("-r", action="store_true",
                         help="shuffles notes so the test set is random")
     args = parser.parse_args()
-    print args.s
-    print args.n
-    print args.d
+    execute(args.auth_token, args.s, args.r, args.n, args.d)
 
 
 if __name__ == "__main__":
     run_cli()
+    #test()

@@ -11,6 +11,9 @@ from collections import OrderedDict
 import logging
 import codecs
 
+import random
+from evernote.edam.type.ttypes import Note
+
 
 class ENCache(object):
     """A read-only cache of note and notebook data.
@@ -28,8 +31,9 @@ class ENCache(object):
       "notes": OrderedDict([(GUID, NOTE), (GUID, NOTE), ...]),
       "notebooks": OrderedDict([(GUID, NOTEBOOK), (GUID, NOTEBOOK), ...)])
 
-    The full set of Note objects (not note contents) is managed in memory,
-    so be careful accessing very large note stores.
+    The full set of Note objects (not note contents) is managed in memory
+    and re-written to disk after each call to sync, so don't use this in high
+    performance scenarios.
 
     Attributes:
         notestore: NoteStore object.
@@ -37,6 +41,7 @@ class ENCache(object):
         last_update_count: The last USN successfully synced.
         notes: List of Note objects, ordered by ascending USN.
         notebooks: List of Notebook objects, ordered by ascending USN.
+        notebook_map: Mapping from Notebook GUIDs to titles.
         auth_token: As passed to __init__.
         cache_path: Path to the cache directory for the user.
         dat_path: Path to the user.dat file for the user.
@@ -116,6 +121,11 @@ class ENCache(object):
         """Get the list of Notebooks, ordered by ascending USN."""
         return self.notebook_data.values()
 
+    @property
+    def notebook_map(self):
+        """Get a mapping from Notebook GUIDs to titles."""
+        return dict([(nb.guid, nb.name) for nb in self.notebooks])
+
     def _write_userfile(self):
         """Write the userfile to the cache."""
         self.logger.debug("writing to cache")
@@ -127,7 +137,7 @@ class ENCache(object):
     def sync(self):
         """Synchronise with the server.
 
-        Read new and updated Note and Notebook object. Delete expunged Notes
+        Read new and updated Note and Notebook objects. Delete expunged Notes
         and Notebooks.
 
         Note content for new and updated Notes is deleted if it already
@@ -235,3 +245,14 @@ class ENCache(object):
             #return unicode(content, "utf-8")
         #return "\n".join(codecs.open(fname, encoding="utf-8"))
         return open(fname)
+
+    def update_notes(self):
+        "Submit a null update for all notes in random order."
+        notes = list(self.notes)
+        random.shuffle(notes)
+        for note in notes:
+            updated = Note()
+            updated.guid = note.guid
+            updated.title = note.title
+            self.notestore.updateNote(self.auth_token, updated)
+            print "updated %s" % note.title
