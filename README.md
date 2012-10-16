@@ -55,7 +55,6 @@ Usage information:
 
 A sample classification run:
 
-	% mkdir data   # create the default data location
 	% ./demo.py S=s1:U=2fa52...
 	connected
 	updating note f270005d-178f-4646-b9cc-e862fe5946b5
