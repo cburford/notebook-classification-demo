@@ -1,5 +1,3 @@
-"Tokeniser class."
-
 import re
 
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 import random
 from tokeniser import Tokeniser
@@ -17,8 +18,8 @@ class TestTokeniser(unittest.TestCase):
         self.assertEqual(tokens, ["hi", "there", ",", "you", "..."])
 
     def test_unicode(self):
-        tokens = Tokeniser.split(u'hi ther\xe9')
-        self.assertEqual(tokens, ["hi", u'ther\xe9'])
+        tokens = Tokeniser.split(u'hi theré')
+        self.assertEqual(tokens, ["hi", u'theré'])
 
 if __name__ == '__main__':
     unittest.main()
