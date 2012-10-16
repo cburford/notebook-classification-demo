@@ -9,9 +9,9 @@ This code demonstrates the process of downloading notes from an Evernote account
 Requirements and Setup
 ----------------------
 
-I have tested on Mac OS X and Linux. Python 2.7 is required. Other dependencies are:
+I have tested only on Mac OS X 10.7 and Debian Linux 6. Python 2.7 is required. Other dependencies are:
 
-* [LIBSVM](http://www.csie.ntu.edu.tw/~cjlin/libsvm/). If you follow the standard install process you will need to manually copy the svm.py and svmutil.py files to somewhere Python can see them.
+* [LIBSVM](http://www.csie.ntu.edu.tw/~cjlin/libsvm/). If you install manually from the download package you may need to copy the svm.py and svmutil.py files to somewhere Python can see them.
 * [lxml](http://lxml.de/index.html) to parse note XML.
 * [prettytable](http://code.google.com/p/prettytable/) to output a table of note classifications to the console.
 * The [Evernote SDK for Python](https://github.com/evernote/evernote-sdk-python).
@@ -91,8 +91,8 @@ The table below shows performance with my constructed test data. For what it's w
 Issues
 ------
 
-The tokenisation regular expression assumes that words are whitespace separated. This breaks down for languages like Chinese and Japanese. The solution would be to incorporate a language identification step and a morphological analyser.
+The tokenisation regular expression assumes that words are whitespace separated. This breaks down for languages like Chinese and Japanese. A language identification facility and a set of language-specific morphological analysers would solve this problem.
 
-The bag-of-words feature model generates very large feature counts. This is not a problem for classifier performance, because linear kernel SVMs do an excellent job in this scenario, but it could present a CPU/memory load problem in a large-scale system. In such a case it would be necessary to introduce a feature selection step. See these [two](http://jmlr.csail.mit.edu/papers/volume3/forman03a/forman03a_full.pdf) [papers](http://www.hpl.hp.com/techreports/2004/HPL-2004-86.pdf) for a good starting point.
+The bag-of-words feature model generates very large feature counts. This is not a problem for classifier performance, because linear kernel SVMs are at their best in this scenario, but it could present a CPU/memory load problem in a large-scale system. In such a case it would be necessary to introduce a feature selection step. See these [two](http://jmlr.csail.mit.edu/papers/volume3/forman03a/forman03a_full.pdf) [papers](http://www.hpl.hp.com/techreports/2004/HPL-2004-86.pdf) for a good starting point.
 
-The feature model does not make use of resource contents. A simple addition would be to add bag-of-words features for the results of NoteStore.getResourceSearchText.
+The feature model does not make use of resource contents. A simple way of addressing this would be to add bag-of-words features for the results of NoteStore.getResourceSearchText.
