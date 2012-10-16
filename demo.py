@@ -10,6 +10,7 @@ import features
 from classifier import SvmClassifier
 from prettytable import PrettyTable
 from datetime import datetime
+import os
 
 
 def note_featuredict(note, content):
@@ -41,6 +42,9 @@ def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
         test_set_size: Number of notes to reserve for the test set.
         cache_dir: Root location for the Evernote cache.
     """
+    if not os.path.exists(cache_dir):
+        print "directory %s does not exist" % cache_dir
+        exit(1)
     logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     encache = ENCache(auth_token, host, cache_root=cache_dir)
     encache.sync()
@@ -89,7 +93,7 @@ classification demo")
     parser.add_argument("-n", help="number of notes to classify (default: 5)",
                         type=int, default=5)
     parser.add_argument("-d", help="cache directory (default: data)",
-                        default="./data")
+                        default="data")
     parser.add_argument("-r", action="store_true",
                         help="shuffles notes so the test set is random")
     args = parser.parse_args()
