@@ -50,7 +50,7 @@ Usage information:
 	  -h, --help  show this help message and exit
 	  -s S        server (default: sandbox.evernote.com)
 	  -n N        number of notes to classify (default: 5)
-	  -d D        cache directory (default: ./data)
+	  -d D        cache directory (default: data)
 	  -r          shuffles notes so the test set is random
 
 A sample classification run:

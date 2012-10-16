@@ -25,8 +25,8 @@ class ENCache(object):
       "notes": OrderedDict([(GUID, NOTE), (GUID, NOTE), ...]),
       "notebooks": OrderedDict([(GUID, NOTEBOOK), (GUID, NOTEBOOK), ...)])
 
-    The full set of Note objects (not note contents) is managed in memory
-    and re-written to disk after each call to sync, so don't use this in high
+    The full set of Note objects (not note contents) is re-written to disk
+    after each call to sync that receives new data, so don't use this in high
     performance scenarios.
 
     Attributes:
@@ -51,8 +51,8 @@ class ENCache(object):
     MAX_SYNC_OBJS = 256  # This is the maximum. See EDAM docs.
 
     def __init__(self, auth_token, host, cache_root="data"):
-        """Connect to the API and read any cached notes and notebooks into
-        memory.
+        """Authenticate to the API and read any cached notes and notebooks
+        into memory.
 
         Args:
             auth_token: A string.
@@ -211,6 +211,9 @@ class ENCache(object):
 
     def note_content(self, note):
         """Get the content of the given note.
+
+        Checks if the content is in the cache then calls the API if
+        necessary.
 
         Args:
             note: Note object.

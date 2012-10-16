@@ -48,7 +48,7 @@ def add_metadata_features(featuredict, note):
 def add_content_features(featuredict, content):
     """Add features from note content.
 
-    Derive the following features from the Note and add them to the
+    Derive the following features from note content and add them to the
     featuredict with binary values:
 
         CONTENT-TOKEN-<token>: Set for each unique, case-folded token in the
@@ -66,12 +66,6 @@ def add_content_features(featuredict, content):
     parser = etree.HTMLParser()
     root = etree.parse(content, parser).getroot()
     string_content = unicode(root.xpath('string()'))
-    #import html2text
-    #h = html2text.HTML2Text()
-    #h.ignore_images = True
-    #h.ignore_links = True
-    #h.ignore_emphasis = True
-    #string_content = h.handle(etree.tostring(root))
     for token in Tokeniser.split(string_content):
         featuredict["CONTENT-TOKEN-%s" % token.lower()] = 1
     for media in root.iterfind(".//en-media"):

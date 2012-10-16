@@ -50,6 +50,7 @@ def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
         print "please specify a smaller test set size"
         exit(1)
     if do_randomise:
+        print "shuffling notes"
         random.shuffle(notes)
     featuresets = []
     for note in notes:
@@ -63,16 +64,17 @@ def execute(auth_token, host, do_randomise, test_set_size, cache_dir):
     labels = classifier.classify(featuresets_t)
     nb_map = encache.notebook_map
     table = PrettyTable(["note", "actual", "predicted", "updated"])
-    max_title_len = 30
+    max_row_len = 30
     for note, label in zip(notes[-test_set_size:], labels):
         dtime = datetime.fromtimestamp(note.updated / 1000)
         updated = dtime.strftime("%Y%m%d %H:%M")
-        row = [note.title, nb_map[note.notebookGuid], nb_map[label], updated]
-        # Work around EDAM encoding bug.
+        row = [note.title, nb_map[note.notebookGuid], nb_map[label]]
         for i, value in enumerate(row):
+            # Work around EDAM encoding bug.
             row[i] = unicode(value, encoding="utf-8")
-        if len(row[0]) > max_title_len:
-            row[0] = "%s..." % row[0][:max_title_len - 3]
+            if len(value) > max_row_len:
+                row[i] = "%s..." % row[i][:max_row_len - 3]
+        row.append(updated)
         table.add_row(row)
     print table
 
@@ -86,7 +88,7 @@ classification demo")
                         help="server (default: sandbox.evernote.com)", )
     parser.add_argument("-n", help="number of notes to classify (default: 5)",
                         type=int, default=5)
-    parser.add_argument("-d", help="cache directory (default: ./data)",
+    parser.add_argument("-d", help="cache directory (default: data)",
                         default="./data")
     parser.add_argument("-r", action="store_true",
                         help="shuffles notes so the test set is random")

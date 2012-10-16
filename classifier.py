@@ -2,11 +2,11 @@ import svmutil
 
 
 class SvmClassifier(object):
-    """Convenience wrapper for libSVM classification.
+    """Convenience wrapper for LIBSVM classification.
 
     The purpose of this code is to hide the details of the instance
-    representation used by libSVM using a 'featureset' representation.
-    The only reason to use it is if you prefer this over the libSVM
+    representation used by LIBSVM using a 'featureset' representation.
+    The only reason to use it is if you prefer this over the LIBSVM
     representation.
 
     A featureset looks like this:
@@ -16,9 +16,9 @@ class SvmClassifier(object):
     where FEATURE and LABEL represent string feature names and labels
     respectively.
 
-    The libSVM representation requires that feature dictionaries and
+    The LIBSVM representation requires that feature dictionaries and
     lists of labels be passed as separate parameters. It also requires that
-    feature names and labels be positive integers rather than strings.
+    feature names and labels be integers rather than strings.
     """
 
     def __init__(self, featureindex, labelindex, model):
@@ -30,7 +30,7 @@ class SvmClassifier(object):
         Args:
             featureindex: Dictionary mapping feature names to integers.
             labelindex: Dictionary mapping labels to integers.
-            model: libSVM model as returned by svmutils.svm_train.
+            model: LIBSVM model as returned by svmutils.svm_train.
         """
         self.labelindex = labelindex
         self.featureindex = featureindex
@@ -39,7 +39,7 @@ class SvmClassifier(object):
 
     @classmethod
     def featuresets_to_svm(cls, featureindex, labelindex, featuresets):
-        """Map featuresets to libSVM vector and label representations.
+        """Map featuresets to LIBSVM vector and label representations.
 
         Args:
             featureindex: Dictionary mapping feature names to integers.
@@ -47,7 +47,7 @@ class SvmClassifier(object):
             featuresets: List of featuresets.
 
         Returns:
-            2-tuple of feature vectors and labels (libSVM style).
+            2-tuple of feature vectors and labels (LIBSVM style).
         """
         vectors = []
         labels = []
@@ -63,7 +63,7 @@ class SvmClassifier(object):
         return vectors, labels
 
     def classify(self, featuresets):
-        """Classify a list of featureset.
+        """Classify a list of featuresets.
 
         Args:
             featuresets: List of featuresets.
