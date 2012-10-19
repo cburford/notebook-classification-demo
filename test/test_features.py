@@ -2,7 +2,6 @@
 
 import unittest
 import features
-import tempfile
 from mock import Mock
 from evernote.edam.type.ttypes import Note, NoteAttributes
 import shutil
