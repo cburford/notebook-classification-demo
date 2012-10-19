@@ -27,10 +27,11 @@ Calls to the Evernote API need an authentication token, normally obtained via OA
 File Descriptions
 -----------------
 
-* demo.py. The main module. Execute this from the command-line to run the demo. See in-module documentation for details of the feature model.
+* demo.py. The main module. Execute this from the command-line to run the demo.
 * tokenizer.py. A regular expression tokeniser.
 * encache.py. A syncing, read-only cache of a user's Evernote note content and metadata. See in-module documentation for details of the on-disk format.
 * classifier.py. A convenience wrapper around the LIBSVM Python interface.
+* features.py. Implements a note metadata and content based feature model.
 * test/*. A set of unit tests.
 
 Usage
