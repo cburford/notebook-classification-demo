@@ -4,7 +4,6 @@ import unittest
 import features
 from mock import Mock
 from evernote.edam.type.ttypes import Note, NoteAttributes
-import shutil
 from StringIO import StringIO
 
 
